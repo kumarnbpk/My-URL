@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sup Link — Instant Shortener</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0b0f1a;
+            --card-bg: rgba(20, 26, 42, 0.8);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* SaaS Rain Animation */
+        #rainCanvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .glow {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% -10%, rgba(99, 102, 241, 0.15), transparent 70%);
+            z-index: -1;
+        }
+
+        nav {
+            width: 100%;
+            max-width: 1000px;
+            padding: 30px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-box {
+            width: 32px; height: 32px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .dev-tag {
+            font-size: 0.7rem;
+            background: rgba(255,255,255,0.05);
+            padding: 5px 12px;
+            border-radius: 100px;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .hero p {
+            color: var(--text-dim);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .card {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 8px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .card:focus-within {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 20px;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            outline: none;
+            text-align: center;
+        }
+
+        .login-group {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .history {
+            width: 100%;
+            margin-top: 40px;
+            display: none;
+        }
+
+        .hist-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding: 0 10px;
+        }
+
+        .clear-btn {
+            background: none; border: none; color: #ef4444; cursor: pointer;
+        }
+
+        .item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 14px 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .item a { color: white; text-decoration: none; }
+        .copy-btn { color: var(--text-dim); cursor: pointer; }
+        .copy-btn:hover { color: var(--primary); }
+
+        #loginSection, #appSection { display: none; width: 100%; }
+
+        .loader {
+            width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: none;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        footer {
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .logout-link {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="rainCanvas"></canvas>
+    <div class="glow"></div>
+
+    <nav>
+        <div class="logo">
+            <div class="logo-box"><i data-lucide="zap" size="18" color="white"></i></div>
+            Sup Link.
+        </div>
+        <div class="dev-tag">By Rajiv</div>
+    </nav>
+
+    <main>
+        <!-- LOGIN PAGE -->
+        <div id="loginSection">
+            <div class="hero">
+                <h1>Welcome Back.</h1>
+                <p>Sign in to access the link shortener.</p>
+            </div>
+            <div class="card">
+                <div class="login-group">
+                    <input type="text" id="username" placeholder="Username" spellcheck="false" autocomplete="off">
+                </div>
+                <div>
+                    <input type="password" id="password" placeholder="Password">
+                </div>
+                <button class="btn" id="loginBtn">
+                    <span>Sign In</span>
+                    <i data-lucide="arrow-right" size="18"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN APP PAGE -->
+        <div id="appSection">
+            <div class="hero">
+                <h1>Shorten links.</h1>
+                <p>Paste a long URL and get a tiny link instantly.</p>
+            </div>
+
+            <div class="card">
+                <input type="url" id="urlInput" placeholder="https://example.com/very-long-link" spellcheck="false" autocomplete="off">
+                <button class="btn" id="shortenBtn">
+                    <div class="loader" id="loader"></div>
+                    <span id="btnText">Shorten Now</span>
+                </button>
+            </div>
+
+            <div id="historySection" class="history">
+                <div class="hist-header">
+                    <span>Recent Links</span>
+                    <button class="clear-btn" onclick="clearHistory()">Clear</button>
+                </div>
+                <div id="historyList"></div>
+            </div>
+
+            <div class="logout-link" onclick="logout()">Log out of system</div>
+        </div>
+    </main>
+
+    <footer>&copy; 2026 SUP LINK SYSTEMS</footer>
+
+    <script>
+        // --- RAIN ANIMATION ---
+        const canvas = document.getElementById('rainCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, drops;
+
+        function initRain() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            drops = Array.from({length: Math.floor(width/20)}, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                len: Math.random() * 30 + 10,
+                speed: Math.random() * 5 + 2
+            }));
+        }
+
+        function drawRain() {
+            ctx.clearRect(0,0,width,height);
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            drops.forEach(d => {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(99, 102, 241, 0.15)`;
+                ctx.moveTo(d.x, d.y);
+                ctx.lineTo(d.x, d.y + d.len);
+                ctx.stroke();
+                d.y += d.speed;
+                if(d.y > height) d.y = -d.len;
+            });
+            requestAnimationFrame(drawRain);
+        }
+        window.addEventListener('resize', initRain);
+        initRain(); drawRain();
+
+        // --- AUTH LOGIC ---
+        const loginSection = document.getElementById('loginSection');
+        const appSection = document.getElementById('appSection');
+        const loginBtn = document.getElementById('loginBtn');
+
+        function checkAuth() {
+            const isAuth = localStorage.getItem('sup_auth');
+            if(isAuth === 'true') {
+                loginSection.style.display = 'none';
+                appSection.style.display = 'block';
+                renderHistory();
+            } else {
+                loginSection.style.display = 'block';
+                appSection.style.display = 'none';
+            }
+            lucide.createIcons();
+        }
+
+        loginBtn.addEventListener('click', () => {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            
+            // STRICT CREDENTIAL CHECK
+            if(user === "admin" && pass === "PassworD") {
+                localStorage.setItem('sup_auth', 'true');
+                checkAuth();
+            } else {
+                alert("Access Denied: Invalid Username or Password");
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('sup_auth');
+            checkAuth();
+        }
+
+        // Allow Enter key to trigger login
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') loginBtn.click();
+        });
+
+        // --- SHORTENER ENGINE ---
+        lucide.createIcons();
+        const shortenBtn = document.getElementById('shortenBtn');
+        const urlInput = document.getElementById('urlInput');
+        const loader = document.getElementById('loader');
+        const btnText = document.getElementById('btnText');
+        const historySection = document.getElementById('historySection');
+        const historyList = document.getElementById('historyList');
+
+        window.onload = checkAuth;
+
+        shortenBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if(!url) return;
+
+            loader.style.display = 'block';
+            btnText.style.display = 'none';
+            shortenBtn.disabled = true;
+
+            try {
+                const response = await fetch(`https://is.gd/create.php?format=json&url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+
+                if(data.shorturl) {
+                    saveLink(data.shorturl);
+                    urlInput.value = '';
+                } else {
+                    alert("Error: " + (data.errormessage || "Invalid URL"));
+                }
+            } catch (e) {
+                alert("Connection failed. Try again.");
+            } finally {
+                loader.style.display = 'none';
+                btnText.style.display = 'block';
+                shortenBtn.disabled = false;
+            }
+        });
+
+        function saveLink(short) {
+            let links = JSON.parse(localStorage.getItem('sup_history') || '[]');
+            links.unshift(short);
+            localStorage.setItem('sup_history', JSON.stringify(links.slice(0, 5)));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            let links = JSON.parse(localStorage.getItem('sup_history') || '[]');
+            if(links.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+            historySection.style.display = 'block';
+            historyList.innerHTML = links.map(link => `
+                <div class="item">
+                    <a href="${link}" target="_blank">${link.replace('https://','')}</a>
+                    <div class="copy-btn" onclick="copyText('${link}', this)">
+                        <i data-lucide="copy" size="16"></i>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function copyText(text, el) {
+            navigator.clipboard.writeText(text);
+            el.innerHTML = '<i data-lucide="check" size="16" style="color:#4ade80"></i>';
+            lucide.createIcons();
+            setTimeout(() => {
+                el.innerHTML = '<i data-lucide="copy" size="16"></i>';
+                lucide.createIcons();
+            }, 2000);
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('sup_history');
+            renderHistory();
+        }
+
+        urlInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') shortenBtn.click(); });
+    </script>
+</body>
+</html>
